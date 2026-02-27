@@ -1,0 +1,34 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Credentials
+kroger_credentials.txt
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+build/
+.npm
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/uvicorn.log
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Database
+*.sqlite3

@@ -3,16 +3,14 @@
 echo "Starting Grocery AI Multi-Agent Backend..."
 cd backend
 export PYTHONPATH=$PYTHONPATH:$(pwd)/..
-export TAVILY_API_KEY="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"
-export GEMINI_API_KEY="AIzaSyAbKwNZ2gkn3kbXdKW6zdVIdWcLfEzik80"
-export SPOONACULAR_API_KEY="ac91f8498bd84bdab211378301001e28"
-# ── Kroger Store Config ─────────────────────────────────────────────────────
-# Change STORE_ID to the Location ID of this physical device's store.
-export STORE_ID="01400943"
-# ── Kroger API Credentials (get from developer.kroger.com) ─────────────────
-# Fill these in to switch from mock data to live Kroger Products + Locations API.
-export KROGER_CLIENT_ID="groceryaikioskassistantapp-bbcc4snj"
-export KROGER_CLIENT_SECRET="qkQoEw57OoOD1o4wiSwUasG55gstfEemCMsEP-k8"
+# ── API Keys & Credentials ────────────────────────────────────────────────
+if [ -f ../.env ]; then
+  export $(grep -v '^#' ../.env | xargs)
+elif [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo "WARNING: .env file missing. Add your API keys there!"
+fi
 # ────────────────────────────────────────────────────────────────────────────
 source venv/bin/activate
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
