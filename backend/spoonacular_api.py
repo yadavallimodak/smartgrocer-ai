@@ -55,6 +55,17 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
                     max_overlap = overlap
                     best_match = res
                     
+            if not best_match:
+                return None
+                
+            # If the API returned a recipe with very low overlap, reject it
+            # e.g., 'Paneer Butter Masala' -> 'Palak Paneer' (1 / 3 = 0.33)
+            if query.lower() not in best_match.get("title", "").lower():
+                word_count = max(1, len(query_words))
+                if max_overlap / word_count < 0.5:
+                    print(f"Spoonacular rejected bad match: {best_match.get('title')} for query {query}")
+                    return None
+                    
             recipe = best_match
             
             # Extract clean ingredient names
