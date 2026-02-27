@@ -1,0 +1,149 @@
+INFO:     Will watch for changes in these directories: ['/Users/modakyadavalli/.gemini/antigravity/playground/stellar-galaxy']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [29234] using StatReload
+INFO:     Started server process [29308]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52266 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52278 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52286 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52286 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+Warning: Kroger API credentials missing. Running in OpenAPI Mock Mode.
+INFO:     127.0.0.1:52298 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52296 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52304 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52310 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52318 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52326 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52334 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52352 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52364 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52375 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52385 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52399 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52406 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52406 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52412 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52420 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52431 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52451 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52458 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52466 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'backend/agents/state_manager.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29308]
+INFO:     Started server process [29533]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52476 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52484 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+INFO:     127.0.0.1:52496 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52500 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52509 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52522 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52529 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52529 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52537 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52545 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52553 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52587 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+INFO:     127.0.0.1:52602 - "POST /api/chat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+INFO:     127.0.0.1:52602 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52608 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52602 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+INFO:     127.0.0.1:52619 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52621 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52619 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52627 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52629 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52627 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52631 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52633 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52635 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52637 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52640 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52642 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52645 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52647 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52666 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52668 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52680 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52682 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52680 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52684 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52687 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52689 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52691 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52693 - "OPTIONS /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52693 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52697 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52695 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52699 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52710 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52712 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52719 - "OPTIONS /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52719 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52721 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52719 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52726 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52728 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+Warning: GEMINI_API_KEY not set. Using rule-based engine.
+INFO:     127.0.0.1:52733 - "POST /api/chat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52736 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52738 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52740 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52742 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52745 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52747 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52759 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52761 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52769 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52771 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52769 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52776 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52778 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52780 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52782 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52785 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52787 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52789 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52791 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52801 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52803 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'backend/agents/state_manager.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [29533]
+INFO:     Started server process [30552]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52812 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52814 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52812 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52817 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52819 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+WARNING:  StatReload detected changes in 'backend/agents/orchestrator.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [30552]
+INFO:     Started server process [30556]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:52825 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52827 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52829 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52831 - "POST /api/devices/heartbeat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [30556]
+INFO:     Stopping reloader process [29234]
