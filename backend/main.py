@@ -1,3 +1,10 @@
+import sys
+import os
+
+# Dynamically add the parent directory (project root) to sys.path so Render
+# can resolve absolute module imports like 'from backend.agents...' natively.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
