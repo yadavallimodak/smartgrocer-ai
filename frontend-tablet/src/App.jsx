@@ -37,7 +37,7 @@ function App() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const chatEndRef = useRef(null);
 
-  const API_URL = 'http://localhost:8000/api/chat';
+  const API_URL = 'https://smartgrocer-ai.onrender.com';
 
   const getLocation = () => new Promise((resolve) => {
     if (userLocation) return resolve(userLocation);
@@ -56,7 +56,7 @@ function App() {
   // Heartbeat to dashboard
   useEffect(() => {
     const heartbeat = setInterval(() => {
-      fetch('http://localhost:8000/api/devices/heartbeat', {
+      fetch(`${API_URL}/api/devices/heartbeat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ device_id: 'tablet-001', status: 'online', battery_level: 95 })

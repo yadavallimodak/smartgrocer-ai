@@ -4,10 +4,10 @@ const DeviceGrid = () => {
     const [devices, setDevices] = useState([]);
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/analytics/devices')
+        fetch('https://smartgrocer-ai.onrender.com/api/analytics/devices')
             .then(res => res.json())
-            .then(data => setDevices(data.devices))
-            .catch(err => console.error("Error fetching devices", err));
+            .then(data => setDevices(data))
+            .catch(err => console.error("Error fetching devices:", err));
     }, []);
 
     return (
@@ -20,10 +20,10 @@ const DeviceGrid = () => {
                     <div key={device.device_id} className="device-card">
                         <div className="device-header">
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 600 }}>{device.device_id}</h3>
-                            <div className={`device-status-indicator ${isOnline ? 'online' : ''}`} title={isOnline ? 'Online' : 'Offline'}></div>
+                            <div className={`device - status - indicator ${isOnline ? 'online' : ''} `} title={isOnline ? 'Online' : 'Offline'}></div>
                         </div>
 
-                        <span className={`badge ${isOnline ? 'success' : 'danger'}`}>
+                        <span className={`badge ${isOnline ? 'success' : 'danger'} `}>
                             {isOnline ? 'Active' : 'Offline'}
                         </span>
 

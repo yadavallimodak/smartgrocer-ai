@@ -5,13 +5,13 @@ const InsightsPanel = () => {
     const [lostSales, setLostSales] = useState(0);
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/analytics/searches')
+        fetch('https://smartgrocer-ai.onrender.com/api/analytics/searches')
             .then(res => res.json())
             .then(data => {
-                setLogs(data.recent_logs);
+                setLogs(data.recent_logs || []); // Assuming data.recent_logs might be renamed to data.searches or similar, but keeping original state variable
                 setLostSales(data.lost_sales);
             })
-            .catch(err => console.error("Error fetching analytics", err));
+            .catch(err => console.error("Error fetching analytics", err)); // Keeping original error message for consistency
     }, []);
 
     return (
