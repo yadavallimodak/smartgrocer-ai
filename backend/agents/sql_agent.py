@@ -58,6 +58,17 @@ def exact_item_lookup(item_name: str, location_id: str = None) -> dict:
         # ── Name ────────────────────────────────────────────────────────────
         name = item.get("description") or item.get("name") or "Grocery Item"
 
+        # ── Relevance Filter ────────────────────────────────────────────────
+        # Prevent Kroger's aggressive stemming from returning Frying Pans for "Paneer"
+        term_lower = item_name.lower()
+        name_lower = name.lower()
+        if term_lower not in name_lower:
+            # If the exact phrase isn't there, require at least one >2 char word to match
+            words = [w for w in term_lower.replace('-', ' ').split() if len(w) > 2]
+            # Some queries like "2%" might be short, so only enforce if we have words
+            if words and not any(w in name_lower for w in words):
+                continue
+
         # ── Price & Stock (from items[] array, NOT locations[]) ─────────────
         item_detail = (item.get("items") or [{}])[0]
         price_obj   = item_detail.get("price") or {}

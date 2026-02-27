@@ -199,7 +199,13 @@ def handle_user_query(query: str, session_id: str = "default_session",
     local_result = exact_item_lookup(item_target, location_id=target_location_id)
     
     if local_result["status"] == "success":
-        # Check stock level
+        # If the catalog returned absolutely nothing (or everything was filtered out)
+        if not local_result["data"]:
+            log_search(query, intent, False, True)
+            fallback_msg = f"I couldn't find '{item_target}' in our catalog right now. What are you planning to make? I might be able to suggest a substitute!"
+            return {"type": "chat", "response": fallback_msg}
+
+        # Check stock level for items that DO exist in the catalog
         in_stock_items = [item for item in local_result["data"] if item["stock"] > 0]
         
         if in_stock_items:
