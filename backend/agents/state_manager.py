@@ -341,7 +341,7 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
         item = session.pop("awaiting_recipe_for")
         rule_session_store[session_id] = session
 
-        # Check if user is giving a recipe name directly
+        # Check if user is giving a recipe name directly from our known DB
         for recipe_name, recipe_data in RECIPE_DB.items():
             if recipe_name in q:
                 return {
@@ -353,54 +353,42 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
                 }
 
         affirmatives = ["yes", "yep", "yeah", "sure", "of course", "please", "go ahead"]
-        if any(a in q for a in affirmatives) or any(t in q for t in RECIPE_TRIGGERS):
-            recipe_candidate = q
-            for phrase in ["i would like to make", "i want to make", "how to make", "do you have a recipe for",
-                           "recipe for", "how do i make", "can you give me a recipe for", "make", "cook"] + affirmatives:
-                recipe_candidate = recipe_candidate.replace(phrase, "").strip()
-            
-            for prefix in ["the ", "a ", "an "]:
-                if recipe_candidate.startswith(prefix):
-                    recipe_candidate = recipe_candidate[len(prefix):]
-            recipe_candidate = recipe_candidate.strip()
-
-            if not recipe_candidate:
-                # User just said "yes" without specifying a dish
-                suggestions = INGREDIENT_TO_RECIPES.get(item, []) or INGREDIENT_TO_RECIPES.get(item.rstrip("s"), [])
-                if suggestions:
-                    recipe_name = suggestions[0]
-                    recipe_data = RECIPE_DB[recipe_name]
-                    return {
-                        "action": "search_recipe",
-                        "recipe_name": recipe_name.title(),
-                        "message": f"Great! Let me pull up the {recipe_name.title()} recipe and find everything you need here!",
-                        "ingredients": recipe_data["ingredients"],
-                        "recipe_instructions": recipe_data["instructions"],
-                    }
+        if any(a == q for a in affirmatives) or "no" in q or "nevermind" in q:
+            # User said no or just affirmed without a dish
+            if "no" in q or "nevermind" in q:
                 return {"action": "direct_lookup", "target_item": item}
-                    
-            # User specified a dish
-            for recipe_name, recipe_data in RECIPE_DB.items():
-                if recipe_name in recipe_candidate or recipe_candidate in recipe_name:
-                    return {
-                        "action": "search_recipe",
-                        "recipe_name": recipe_name.title(),
-                        "message": f"Great! Let me pull up the {recipe_name.title()} recipe and find everything you need here!",
-                        "ingredients": recipe_data["ingredients"],
-                        "recipe_instructions": recipe_data["instructions"],
-                    }
-                    
-            # Unknown recipe
-            return {
-                "action": "search_recipe",
-                "recipe_name": recipe_candidate.title(),
-                "message": f"I don't have the exact recipe for {recipe_candidate.title()} saved, but I'd be happy to help you find the ingredients if you know what you need!",
-                "ingredients": [],
-                "recipe_instructions": ""
-            }
-        else:
-            # User said no → just do a direct lookup for the item
+                
+            suggestions = INGREDIENT_TO_RECIPES.get(item, []) or INGREDIENT_TO_RECIPES.get(item.rstrip("s"), [])
+            if suggestions:
+                recipe_name = suggestions[0]
+                return {
+                    "action": "search_recipe",
+                    "recipe_name": recipe_name.title(),
+                    "message": f"Great! Let me pull up the {recipe_name.title()} recipe and find everything you need here!",
+                    "ingredients": RECIPE_DB[recipe_name]["ingredients"],
+                    "recipe_instructions": RECIPE_DB[recipe_name]["instructions"],
+                }
             return {"action": "direct_lookup", "target_item": item}
+
+        # Otherwise, treat whatever they typed as the recipe name!
+        recipe_candidate = q
+        for phrase in ["i would like to make", "i want to make", "how to make", "do you have a recipe for",
+                       "recipe for", "how do i make", "can you give me a recipe for", "make", "cook"] + affirmatives:
+            recipe_candidate = recipe_candidate.replace(phrase, "").strip()
+            
+        for prefix in ["the ", "a ", "an "]:
+            if recipe_candidate.startswith(prefix):
+                recipe_candidate = recipe_candidate[len(prefix):]
+        recipe_candidate = recipe_candidate.strip()
+        
+        # We don't have it in our local DB, but route to search_recipe so spoonacular/orchestrator handles it!
+        return {
+            "action": "search_recipe",
+            "recipe_name": recipe_candidate.title(),
+            "message": f"I don't have the exact recipe for {recipe_candidate.title()} saved, but I'd be happy to help you find the ingredients if you know what you need!",
+            "ingredients": [],
+            "recipe_instructions": ""
+        }
 
     # 5. Explicit recipe name in query
     for recipe_name, recipe_data in RECIPE_DB.items():
@@ -449,7 +437,7 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
     item = q
     for phrase in ["do you have", "where are", "where is", "where are the",
                    "i need", "looking for", "find me", "do you carry", "in stock",
-                   "any", "some"]:
+                   "any", "some", "please", "thanks", "thank you"]:
         item = item.replace(phrase, "").strip()
     item = item.strip()
 
