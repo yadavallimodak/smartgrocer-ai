@@ -80,7 +80,7 @@ function App() {
 
     try {
       const loc = await getLocation();
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -254,7 +254,7 @@ function App() {
               <span>About</span>
             </button>
             <a
-              href="http://localhost:5174/dashboard"
+              href="smartgrocer-ai-tool.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-xl flex items-center gap-2 text-white/80 hover:bg-white/5 hover:text-white transition-all font-medium text-sm"
