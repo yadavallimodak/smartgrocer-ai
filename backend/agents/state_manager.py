@@ -336,7 +336,7 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
             "message": f"I know recipes for: {', '.join(r.title() for r in list(RECIPE_DB.keys())[:8])}. Which one would you like to make?"
         }
 
-    # 4. If we're waiting for a recipe answer from previous turn
+    # 4. If we're waiting for a recipe answer from previous turn (ingredient follow-up)
     if session.get("awaiting_recipe_for"):
         item = session.pop("awaiting_recipe_for")
         rule_session_store[session_id] = session
@@ -352,10 +352,12 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
                     "recipe_instructions": recipe_data["instructions"],
                 }
 
-        affirmatives = ["yes", "yep", "yeah", "sure", "of course", "please", "go ahead"]
-        if any(a == q for a in affirmatives) or "no" in q or "nevermind" in q:
-            # User said no or just affirmed without a dish
-            if "no" in q or "nevermind" in q:
+        affirmatives = ["yes", "yep", "yeah", "sure", "of course", "please", "go ahead", "ok", "okay"]
+        is_affirmative = any(a in q for a in affirmatives)
+        is_negative = any(n in q for n in ["no", "nevermind", "never mind", "nah", "nope"])
+        
+        if is_affirmative or is_negative:
+            if is_negative:
                 return {"action": "direct_lookup", "target_item": item}
                 
             suggestions = INGREDIENT_TO_RECIPES.get(item, []) or INGREDIENT_TO_RECIPES.get(item.rstrip("s"), [])
@@ -389,6 +391,31 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
             "ingredients": [],
             "recipe_instructions": ""
         }
+
+    # 4b. If we previously attempted a recipe and the user is confirming ("yes go ahead")
+    if session.get("pending_recipe"):
+        pending = session.pop("pending_recipe")
+        rule_session_store[session_id] = session
+
+        affirmatives = ["yes", "yep", "yeah", "sure", "of course", "please", "go ahead", "ok", "okay", "help"]
+        is_affirmative = any(a in q for a in affirmatives)
+        is_negative = any(n in q for n in ["no", "nevermind", "never mind", "nah", "nope"])
+
+        if is_negative:
+            return {
+                "action": "general_chat",
+                "message": "Alright! Let me know if there's anything else I can help you with. 😊"
+            }
+
+        if is_affirmative or not any(t in q for t in RECIPE_TRIGGERS):
+            # User confirmed — retry the recipe search via Spoonacular
+            return {
+                "action": "search_recipe",
+                "recipe_name": pending,
+                "message": f"Absolutely! Let me find the full recipe and ingredients for {pending}.",
+                "ingredients": [],
+                "recipe_instructions": ""
+            }
 
     # 5. Explicit recipe name in query
     for recipe_name, recipe_data in RECIPE_DB.items():
@@ -430,7 +457,10 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
                 }
 
         # Unknown recipe → we don't know the ingredients, but it's clearly a recipe request
+        # Save the recipe name to session so the NEXT turn remembers context
         recipe_name = recipe_candidate.title() if recipe_candidate else "that dish"
+        session["pending_recipe"] = recipe_name
+        rule_session_store[session_id] = session
         return {
             "action": "search_recipe",
             "recipe_name": recipe_name,
