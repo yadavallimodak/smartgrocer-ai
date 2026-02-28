@@ -296,17 +296,22 @@ function App() {
 
           {/* Right: Store & Status */}
           <div className="flex items-center gap-3 flex-shrink-1 min-w-0">
-            <select
-              className="appearance-none bg-transparent text-white py-2 px-4 pr-9 rounded-xl text-sm font-medium focus:outline-none transition-all cursor-pointer truncate max-w-[250px] md:max-w-[400px]"
-              value={storeId}
-              onChange={handleStoreChange}
-              title={availableStores.find(s => s.id === storeId)?.address || 'Select a store'}
-              style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem top 50%', backgroundSize: '0.65rem auto' }}
-            >
-              {availableStores.map((s) => (
-                <option key={s.id} value={s.id} className="text-gray-900 bg-white" title={s.address}>{s.name}</option>
-              ))}
-            </select>
+            <div className="relative group">
+              <select
+                className="appearance-none bg-transparent text-white py-2 px-4 pr-9 rounded-xl text-sm font-medium focus:outline-none transition-all cursor-pointer truncate max-w-[250px] md:max-w-[400px]"
+                value={storeId}
+                onChange={handleStoreChange}
+                style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem top 50%', backgroundSize: '0.65rem auto' }}
+              >
+                {availableStores.map((s) => (
+                  <option key={s.id} value={s.id} className="text-gray-900 bg-white">{s.name}</option>
+                ))}
+              </select>
+              {/* Custom tooltip with full address — appears on hover */}
+              <div className="absolute top-full right-0 mt-2 px-4 py-2 bg-gray-900/95 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-[60] backdrop-blur-sm border border-white/10">
+                📍 {availableStores.find(s => s.id === storeId)?.address || 'Address unavailable'}
+              </div>
+            </div>
             <div className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-transparent text-white rounded-xl text-sm font-semibold flex-shrink-0">
               <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
               Online
