@@ -354,12 +354,15 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
 
         affirmatives = ["yes", "yep", "yeah", "sure", "of course", "please", "go ahead", "ok", "okay"]
         is_affirmative = any(a in q for a in affirmatives)
-        is_negative = any(n in q for n in ["no", "nevermind", "never mind", "nah", "nope"])
+        is_negative = any(n in q for n in ["no", "nevermind", "never mind", "nah", "nope", "that's all", "thats all", "i'm good", "im good", "goodbye", "bye"])
         
-        if is_affirmative or is_negative:
-            if is_negative:
-                return {"action": "direct_lookup", "target_item": item}
-                
+        if is_negative:
+            return {
+                "action": "general_chat",
+                "message": f"No worries! You'll find the {item} right where I showed you. If you need anything else, I'm here to help. Have a great shopping trip! 👋"
+            }
+        
+        if is_affirmative:
             suggestions = INGREDIENT_TO_RECIPES.get(item, []) or INGREDIENT_TO_RECIPES.get(item.rstrip("s"), [])
             if suggestions:
                 recipe_name = suggestions[0]
@@ -370,7 +373,14 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
                     "ingredients": RECIPE_DB[recipe_name]["ingredients"],
                     "recipe_instructions": RECIPE_DB[recipe_name]["instructions"],
                 }
-            return {"action": "direct_lookup", "target_item": item}
+            # No known recipe in DB, but let the orchestrator try Gemini/Spoonacular
+            return {
+                "action": "search_recipe",
+                "recipe_name": item.title(),
+                "message": f"Let me find some great recipes using {item}!",
+                "ingredients": [],
+                "recipe_instructions": ""
+            }
 
         # Otherwise, treat whatever they typed as the recipe name!
         recipe_candidate = q

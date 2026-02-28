@@ -2,7 +2,7 @@ from backend.agents.sql_agent import exact_item_lookup, execute_safe_sql
 from backend.agents.cloud_sql_translator import generate_sql_from_text
 from backend.agents.search_agent import search_nearby_stores, search_web_for_general_query
 from backend.agents.analytics import log_search
-from backend.agents.state_manager import analyze_kroger_intent, STORE_ID
+from backend.agents.state_manager import analyze_kroger_intent, STORE_ID, rule_session_store
 from backend.kroger_api import find_nearby_stores
 import os
 
@@ -289,6 +289,14 @@ Example: {{"ingredients": ["butter", "onion", "tomato"], "instructions": "1. Cho
             msg = kroger_intent.get("message", "I found it!")
             if target_store_msg and "found" in msg.lower():
                 msg = f"I found it{target_store_msg}!"
+            
+            # Add conversational follow-up: ask what they're making
+            msg += f"\n\nMay I know what you're planning to make with the {item_target}? I can help you find a recipe and all the ingredients you'll need! 😊"
+            
+            # Save to session so the next turn remembers context
+            session = rule_session_store.get(session_id, {})
+            session["awaiting_recipe_for"] = item_target
+            rule_session_store[session_id] = session
                 
             return {
                 "type": "inventory_item", 
