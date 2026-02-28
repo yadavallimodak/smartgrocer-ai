@@ -606,7 +606,7 @@ def analyze_kroger_intent(session_id: str, query: str, user_store_id: str = None
 
         history.append({"role": "User", "content": query})
         history.append({"role": "Assistant", "content": json.dumps(result)})
-        session_store[session_id] = history[-20:]
+        session_store[session_id] = history
         return result
 
     except Exception as e:

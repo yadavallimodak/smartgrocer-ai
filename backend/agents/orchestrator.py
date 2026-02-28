@@ -22,7 +22,7 @@ def handle_user_query(query: str, session_id: str = "default_session",
         history = session_store.get(session_id, [])
         history.append({"role": "User", "content": query})
         history.append({"role": "Assistant", "content": response_text})
-        session_store[session_id] = history[-20:]  # Keep last 20 turns
+        session_store[session_id] = history
 
     query_lower = query.lower()
     intent = "unknown"
