@@ -13,6 +13,7 @@ import sqlite3
 from backend.agents.orchestrator import handle_user_query
 from backend.agents.analytics import ANALYTICS_DB_PATH, update_device_status
 from backend.database import init_db
+from backend.kroger_api import find_nearby_stores
 
 app = FastAPI(title="Grocery Multi-Agent API")
 
@@ -63,6 +64,26 @@ def chat_endpoint(request: QueryRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/nearest-store")
+def nearest_store(lat: float, lon: float):
+    """Returns the nearest Kroger store to the given coordinates.
+    Uses the Kroger Locations API for real data, or mock DFW data as fallback."""
+    try:
+        stores = find_nearby_stores(lat, lon, radius_miles=50)
+        if stores:
+            nearest = stores[0]
+            return {
+                "store_id": nearest["store_id"],
+                "name": nearest["name"],
+                "address": nearest["address"],
+                "distance_miles": nearest["distance_miles"],
+                "phone": nearest.get("phone", ""),
+                "hours": nearest.get("hours", ""),
+            }
+        return {"store_id": None, "name": "No Kroger stores found nearby", "address": "", "distance_miles": None}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/devices/heartbeat")
 def heartbeat(status: DeviceStatus):
     """Tablet endpoint. Reports device health."""
@@ -98,3 +119,4 @@ def get_devices():
     devices = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return {"devices": devices}
+
