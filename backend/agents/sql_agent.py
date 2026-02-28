@@ -77,12 +77,24 @@ def exact_item_lookup(item_name: str, location_id: str = None, recipe_context: b
         name = item.get("description") or item.get("name") or "Grocery Item"
 
         # ── Relevance Filter ────────────────────────────────────────────────
-        # Prevent Kroger's aggressive stemming from returning Frying Pans for "Paneer"
+        # Prevent Kroger's aggressive stemming from returning wrong items
+        # (e.g., "Pre-Cooked Spaghetti" for "cooked rice")
         term_lower = item_name.lower()
         name_lower = name.lower()
+        
+        # Modifier words that should NOT count as relevance matches
+        _MODIFIER_WORDS = {
+            "cooked", "fresh", "ground", "large", "small", "medium", "whole",
+            "organic", "raw", "dried", "dry", "frozen", "canned", "chopped",
+            "diced", "sliced", "minced", "crushed", "roasted", "toasted",
+            "unsalted", "salted", "plain", "pure", "natural", "light",
+            "low", "reduced", "free", "boneless", "skinless", "extra",
+        }
+        
         if term_lower not in name_lower:
-            # If the exact phrase isn't there, require at least one >2 char word to match
-            words = [w for w in term_lower.replace('-', ' ').split() if len(w) > 2]
+            # Get meaningful words (not modifiers, not short words)
+            words = [w for w in term_lower.replace('-', ' ').split() 
+                     if len(w) > 2 and w not in _MODIFIER_WORDS]
             # Some queries like "2%" might be short, so only enforce if we have words
             if words and not any(w in name_lower for w in words):
                 continue
