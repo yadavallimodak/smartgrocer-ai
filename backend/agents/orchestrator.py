@@ -141,19 +141,22 @@ Example: {{"ingredients": ["butter", "onion", "tomato"], "instructions": "1. Cho
         missing = []
         
         for ing in ingredients:
-            res = exact_item_lookup(ing)
+            res = exact_item_lookup(ing, recipe_context=True)
             if res["status"] == "success" and res["data"] and any(i["stock"] > 0 for i in res["data"]):
                 found_locally.extend([i for i in res["data"] if i["stock"] > 0][:1])
             else:
                 missing.append(ing)
                 
-        # If missing ingredients, query nearby grocery stores within 10 miles
+        # If missing ingredients, suggest a DIFFERENT nearby store (not the current one)
         missing_text = ""
+        current_store_id = user_store_id or STORE_ID
         if missing:
             if user_lat is not None and user_lon is not None:
                 nearby = find_nearby_stores(user_lat, user_lon, radius_miles=10)
-                if nearby:
-                    s = nearby[0]
+                # Filter out the user's current store — don't suggest the store they're already in!
+                other_stores = [s for s in nearby if s.get('store_id') != current_store_id]
+                if other_stores:
+                    s = other_stores[0]
                     missing_text = f"\n\nWe don't currently have {', '.join(missing)} in stock here, but I checked nearby and **{s['name']}** ({s['distance_miles']} miles away) may have them!"
             
             if not missing_text:

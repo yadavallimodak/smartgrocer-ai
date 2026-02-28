@@ -39,9 +39,27 @@ _STORE_ADDRESSES = {
 
 from functools import lru_cache
 
+# Categories that are cooking/food items — used to deprioritize supplements, health products
+_COOKING_CATEGORIES = {
+    "Produce", "Dairy", "Bakery", "Baking Goods", "Meat", "Seafood",
+    "Frozen", "Beverages", "Snacks", "Cereal", "Canned & Packaged",
+    "Pasta", "Sauces", "Condiments", "Pantry", "Deli", "Natural & Organic",
+}
+
+# Product name patterns that indicate supplements, NOT cooking ingredients
+_SUPPLEMENT_KEYWORDS = [
+    "immune support", "supplement", "vitamin", "emergen-c", "emergen c",
+    "capsule", "tablet", "softgel", "gummies", "wellness",
+    "probiotic", "multivitamin", "dietary", "health support",
+]
+
 @lru_cache(maxsize=128)
-def exact_item_lookup(item_name: str, location_id: str = None) -> dict:
-    """Fast lookup using the live Kroger API (or mock wrapper) instead of local DB."""
+def exact_item_lookup(item_name: str, location_id: str = None, recipe_context: bool = False) -> dict:
+    """Fast lookup using the live Kroger API (or mock wrapper) instead of local DB.
+    
+    When recipe_context=True, supplements/health products are filtered out
+    so we only return actual cooking ingredients.
+    """
     from backend.kroger_api import search_products
     
     target_store = location_id if location_id else _STORE_ID
@@ -113,6 +131,12 @@ def exact_item_lookup(item_name: str, location_id: str = None) -> dict:
             sizes = images[0].get("sizes") or []
             xlarge = next((s["url"] for s in sizes if s.get("size") == "xlarge"), None)
             image  = xlarge or (sizes[0].get("url") if sizes else None)
+
+        # ── Recipe context filtering ─────────────────────────────────────────
+        # When searching for recipe ingredients, skip supplements & health products
+        if recipe_context:
+            if any(kw in name_lower for kw in _SUPPLEMENT_KEYWORDS):
+                continue
 
         results.append({
             "id":            item.get("upc"),
