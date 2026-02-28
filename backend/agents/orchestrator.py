@@ -23,11 +23,32 @@ def handle_user_query(query: str, session_id: str = "default_session",
     action = kroger_intent.get("action", "fallback_routing")
     
     if action == "out_of_domain":
-        return {"type": "chat", "response": kroger_intent.get("message", "I can only help with grocery questions.")}
+        # Instead of rejecting, use Tavily web search to actually answer the question
+        web_answer = search_web_for_general_query(query)
+        if web_answer and "couldn't find" not in web_answer:
+            return {"type": "chat", "response": f"That's a bit outside my grocery expertise, but I found this for you:\n\n{web_answer}\n\nIs there anything grocery-related I can help with? 😊"}
+        # If Tavily fails, try Gemini for a conversational answer
+        try:
+            api_key = os.environ.get("GEMINI_API_KEY")
+            if api_key:
+                from google import genai
+                client = genai.Client(api_key=api_key)
+                resp = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=[f"You are a friendly grocery store assistant. A customer asked: '{query}'. Give a very brief, helpful answer (2-3 sentences max), then gently redirect back to how you can help them with groceries."]
+                )
+                return {"type": "chat", "response": resp.text}
+        except Exception as e:
+            print(f"Gemini general chat fallback failed: {e}")
+        return {"type": "chat", "response": kroger_intent.get("message", "I can only help with grocery questions, but feel free to ask me about products, recipes, or nearby stores!")}
         
     if action == "general_chat":
-        return {"type": "chat", "response": kroger_intent.get("message", "How can I help you today?")}
-
+        # Use Gemini for dynamic, natural conversation instead of static messages
+        gemini_msg = kroger_intent.get("message", "")
+        if gemini_msg:
+            return {"type": "chat", "response": gemini_msg}
+        # If Gemini was down and rule engine gave a generic message, enhance it
+        return {"type": "chat", "response": "How can I help you today? I can find products, suggest recipes, or locate nearby Kroger stores! 😊"}
         
     if action == "ask_followup":
         return {"type": "chat", "response": kroger_intent.get("message", "Are you making a specific recipe?")}
