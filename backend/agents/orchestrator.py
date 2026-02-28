@@ -60,29 +60,7 @@ def handle_user_query(query: str, session_id: str = "default_session",
         exclude_ingredients = kroger_intent.get("exclude_ingredients")
         diet = kroger_intent.get("diet")
         
-        # STEP 1: Try Spoonacular as the primary recipe data source
-        try:
-            from backend.spoonacular_api import search_recipe as spoonacular_search
-            spoon_data = spoonacular_search(recipe, exclude_ingredients=exclude_ingredients, diet=diet)
-            if spoon_data:
-                # Keep the user's original recipe name — don't overwrite with Spoonacular's
-                # (e.g., user asked for "Paneer Butter Masala", Spoonacular found "Palak Paneer")
-                if spoon_data["ingredients"]:
-                    ingredients = spoon_data["ingredients"]
-                
-                # Only override instructions if Spoonacular actually found them
-                if "No detailed instructions available" not in spoon_data["instructions"]:
-                    instructions = spoon_data["instructions"]
-                    
-                print(f"Loaded ingredients from Spoonacular (matched: {spoon_data['recipe_name']}) for user query: {recipe}")
-                
-                # Fix the vague message from rule-based engine
-                if "I don't have the exact recipe" in kroger_intent.get("message", ""):
-                    kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's a recipe for you, including the ingredients and steps."
-        except Exception as e:
-            print(f"Spoonacular integration skipped/failed: {e}")
-        
-        # STEP 2: If STILL no ingredients (Spoonacular missed too), try a direct Gemini call
+        # ── STEP 1: Try Gemini FIRST — it knows ALL cuisines (Indian, Chinese, etc.) ──
         if not ingredients:
             try:
                 import json as _json
@@ -91,10 +69,18 @@ def handle_user_query(query: str, session_id: str = "default_session",
                     from google import genai
                     from google.genai import types
                     client = genai.Client(api_key=api_key)
-                    recipe_prompt = f"List ONLY the ingredient names for {recipe}. Return a JSON array of strings. Example: [\"butter\", \"onion\", \"tomato\"]. No quantities, no instructions, just ingredient names."
+                    
+                    diet_note = f" The recipe should be {diet}." if diet else ""
+                    exclude_note = f" Exclude these ingredients: {exclude_ingredients}." if exclude_ingredients else ""
+                    
+                    recipe_prompt = f"""For the recipe "{recipe}"{diet_note}{exclude_note}, return a JSON object with:
+- "ingredients": an array of ingredient name strings (just names, no quantities)  
+- "instructions": a single string with numbered steps like "1. Do this. 2. Do that."
+Example: {{"ingredients": ["butter", "onion", "tomato"], "instructions": "1. Chop onions. 2. Fry in butter."}}"""
+                    
                     config = types.GenerateContentConfig(
                         response_mime_type="application/json",
-                        temperature=0.0
+                        temperature=0.2
                     )
                     resp = client.models.generate_content(
                         model="gemini-2.0-flash",
@@ -102,40 +88,48 @@ def handle_user_query(query: str, session_id: str = "default_session",
                         config=config
                     )
                     parsed = _json.loads(resp.text)
-                    if isinstance(parsed, list) and parsed:
+                    if isinstance(parsed, dict):
+                        if parsed.get("ingredients"):
+                            ingredients = [i.title() for i in parsed["ingredients"] if isinstance(i, str)]
+                        if parsed.get("instructions"):
+                            instructions = parsed["instructions"]
+                        if ingredients:
+                            print(f"Gemini generated {len(ingredients)} ingredients + instructions for '{recipe}'")
+                            kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's the recipe for you, including the ingredients and steps."
+                    elif isinstance(parsed, list) and parsed:
                         ingredients = [i.title() for i in parsed if isinstance(i, str)]
-                        print(f"Loaded {len(ingredients)} ingredients from Gemini fallback for '{recipe}'")
+                        print(f"Gemini generated {len(ingredients)} ingredients for '{recipe}'")
                         kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's a recipe for you, including the ingredients and steps."
             except Exception as e:
-                print(f"Gemini recipe fallback failed: {e}")
+                print(f"Gemini recipe generation failed: {e}")
         
-        # STEP 3: If STILL no instructions, try Gemini for that too
-        if not instructions and ingredients:
+        # ── STEP 2: If Gemini failed (rate-limited), try Spoonacular with Indian translation ──
+        if not ingredients:
             try:
-                import json as _json
-                api_key = os.environ.get("GEMINI_API_KEY")
-                if api_key:
-                    from google import genai
-                    from google.genai import types
-                    client = genai.Client(api_key=api_key)
-                    instr_prompt = f"Give me step-by-step cooking instructions for {recipe}. Return as a single string with numbered steps like '1. Do this. 2. Do that.' Be concise but complete."
-                    config = types.GenerateContentConfig(
-                        response_mime_type="application/json",
-                        temperature=0.0
-                    )
-                    resp = client.models.generate_content(
-                        model="gemini-2.0-flash",
-                        contents=[instr_prompt],
-                        config=config
-                    )
-                    parsed = _json.loads(resp.text)
-                    if isinstance(parsed, str):
-                        instructions = parsed
-                    elif isinstance(parsed, dict):
-                        instructions = parsed.get("instructions") or parsed.get("steps") or str(parsed)
-                    print(f"Loaded instructions from Gemini fallback for '{recipe}'")
+                from backend.spoonacular_api import search_recipe as spoonacular_search
+                spoon_data = spoonacular_search(recipe, exclude_ingredients=exclude_ingredients, diet=diet)
+                if spoon_data:
+                    if spoon_data["ingredients"]:
+                        ingredients = spoon_data["ingredients"]
+                    if not instructions and "No detailed instructions available" not in spoon_data["instructions"]:
+                        instructions = spoon_data["instructions"]
+                    print(f"Spoonacular found recipe (matched: {spoon_data['recipe_name']}) for query: {recipe}")
+                    if "I don't have the exact recipe" in kroger_intent.get("message", ""):
+                        kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's a recipe for you, including the ingredients and steps."
             except Exception as e:
-                print(f"Gemini instructions fallback failed: {e}")
+                print(f"Spoonacular integration failed: {e}")
+        
+        # ── STEP 3: If BOTH failed, try Tavily web search as last resort ──
+        if not ingredients:
+            try:
+                web_result = search_web_for_general_query(f"ingredients list for {recipe} recipe")
+                if web_result and "couldn't find" not in web_result:
+                    # Try to extract ingredient-like words from the web result
+                    print(f"Tavily found recipe info for '{recipe}': {web_result[:100]}...")
+                    # Still return the web snippet as part of the message
+                    kroger_intent["message"] = f"I found some information about {recipe}:\n\n{web_result[:500]}"
+            except Exception as e:
+                print(f"Tavily recipe search failed: {e}")
         
         reply_message = kroger_intent.get("message", f"Let's get the ingredients for {recipe}.")
         
