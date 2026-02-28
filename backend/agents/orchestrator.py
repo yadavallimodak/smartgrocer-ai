@@ -44,7 +44,8 @@ def handle_user_query(query: str, session_id: str = "default_session",
             from backend.spoonacular_api import search_recipe as spoonacular_search
             spoon_data = spoonacular_search(recipe, exclude_ingredients=exclude_ingredients, diet=diet)
             if spoon_data:
-                recipe = spoon_data["recipe_name"]
+                # Keep the user's original recipe name — don't overwrite with Spoonacular's
+                # (e.g., user asked for "Paneer Butter Masala", Spoonacular found "Palak Paneer")
                 if spoon_data["ingredients"]:
                     ingredients = spoon_data["ingredients"]
                 
@@ -52,7 +53,7 @@ def handle_user_query(query: str, session_id: str = "default_session",
                 if "No detailed instructions available" not in spoon_data["instructions"]:
                     instructions = spoon_data["instructions"]
                     
-                print(f"Loaded recipe from Spoonacular: {recipe}")
+                print(f"Loaded ingredients from Spoonacular (matched: {spoon_data['recipe_name']}) for user query: {recipe}")
                 
                 # Fix the vague message from rule-based engine
                 if "I don't have the exact recipe" in kroger_intent.get("message", ""):

@@ -254,7 +254,7 @@ function App() {
               <span>About</span>
             </button>
             <a
-              href="smartgrocer-ai-tool.vercel.app"
+              href="https://smartgrocer-ai-tool.vercel.app/dashboard"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 rounded-xl flex items-center gap-2 text-white/80 hover:bg-white/5 hover:text-white transition-all font-medium text-sm"

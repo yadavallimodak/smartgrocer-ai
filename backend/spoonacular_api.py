@@ -14,6 +14,14 @@ _MEASUREMENT_WORDS = {
     "cloves", "head", "stalk", "stalks", "sprig", "sprigs", "knob",
 }
 
+# Ingredients that are almost certainly wrong for savory main dishes.
+# Spoonacular sometimes returns recipes that contain irrelevant extras.
+_IRRELEVANT_INGREDIENTS = {
+    "english muffin", "english muffins", "muffin", "muffins",
+    "tortilla chips", "graham cracker", "marshmallow",
+    "chocolate chips", "whipped cream", "ice cream",
+}
+
 
 def _clean_ingredient_name(raw: str) -> str:
     """
@@ -26,6 +34,11 @@ def _clean_ingredient_name(raw: str) -> str:
         words.pop(0)
     cleaned = " ".join(words) if words else raw
     return cleaned.strip()
+
+
+def _is_relevant_ingredient(name: str) -> bool:
+    """Reject obviously wrong ingredients (e.g., 'muffin' in a masala recipe)."""
+    return name.lower().strip() not in _IRRELEVANT_INGREDIENTS
 
 
 def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None) -> Optional[Dict[str, Any]]:
@@ -83,8 +96,6 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
                 return None
                 
             # Accept the match if at least ONE meaningful word overlaps.
-            # This allows "Palak Paneer" for "Paneer Butter Masala" (shares "paneer")
-            # but still rejects completely unrelated recipes.
             if query.lower() not in best_match.get("title", "").lower():
                 if max_overlap == 0:
                     print(f"Spoonacular rejected: no word overlap between '{best_match.get('title')}' and '{query}'")
@@ -99,7 +110,7 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
                 name = ing.get("nameClean") or ing.get("name")
                 if name:
                     cleaned = _clean_ingredient_name(name)
-                    if cleaned:
+                    if cleaned and _is_relevant_ingredient(cleaned):
                         ingredients.append(cleaned.title())
             
             # Remove duplicates while preserving order
