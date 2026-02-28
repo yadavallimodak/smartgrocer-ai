@@ -25,7 +25,7 @@ const AVAILABLE_STORES = [
 
 function App() {
   const [messages, setMessages] = useState([
-    { sender: 'bot', text: 'Hi there! 👋 I\'m your Kroger in-store assistant.  \nAsk me where anything is, get recipe help, or find nearby locations!', type: 'chat' }
+    { sender: 'bot', text: 'Hi there! 🤝 I\'m Grocer, your in-store assistant.  \nAsk me where anything is, get recipe help, or find nearby locations!', type: 'chat' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [userLocation, setUserLocation] = useState(null);

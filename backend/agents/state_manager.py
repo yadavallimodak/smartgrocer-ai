@@ -408,9 +408,15 @@ def _rule_based_intent(session_id: str, query: str) -> dict:
                        "recipe for", "how do i make", "can you give me a recipe for", "make", "cook"]:
             recipe_candidate = recipe_candidate.replace(phrase, "").strip()
             
-        for prefix in ["the ", "a ", "an "]:
-            if recipe_candidate.startswith(prefix):
+        for prefix in ["the ", "a ", "an ", "some ", "okay so ", "ok so ", "so ", "well ", "right ", "listen ", "please "]:
+            if recipe_candidate.lower().startswith(prefix):
                 recipe_candidate = recipe_candidate[len(prefix):]
+                
+        # Aggressively strip trailing conversational fluff by slicing on common delimiters
+        for delimiter in [",", ".", "?", " what are", " suggest", " how to", " what is", " what do i", " and recipe", " recipe", " what do you", " please"]:
+            if delimiter in recipe_candidate:
+                recipe_candidate = recipe_candidate.split(delimiter)[0]
+                
         recipe_candidate = recipe_candidate.strip()
 
         for recipe_name, recipe_data in RECIPE_DB.items():
