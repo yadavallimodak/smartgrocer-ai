@@ -256,7 +256,7 @@ function App() {
       {/* Header */}
       {/* Header Island */}
       <div className="fixed top-5 left-0 right-0 w-full z-50 flex justify-center pointer-events-none px-4 md:px-8">
-        <div className="w-[98%] max-w-[1500px] flex justify-between items-center gap-4 bg-transparent p-2 pr-3 pointer-events-auto overflow-hidden">
+        <div className="w-[98%] max-w-[1500px] flex justify-between items-center gap-4 bg-transparent p-2 pr-3 pointer-events-auto">
           {/* Left: Logo */}
           <div className="flex items-center gap-3 pl-2 flex-shrink-0">
             <div className="w-11 h-11 bg-gradient-to-br from-[#10b981] to-[#3b82f6] rounded-2xl flex items-center justify-center shadow-lg border border-white/20">
