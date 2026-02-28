@@ -221,9 +221,16 @@ function App() {
       .trim();
     if (!cleanText) return;
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    utterance.rate = 0.9;
+    utterance.pitch = 1.05;
     utterance.volume = 1.0;
+    // Try to pick a pleasant, natural-sounding voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v =>
+      /samantha|karen|google us english|microsoft zira|fiona|moira|tessa/i.test(v.name)
+    ) || voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'))
+      || voices.find(v => v.lang.startsWith('en'));
+    if (preferred) utterance.voice = preferred;
     window.speechSynthesis.speak(utterance);
   };
 
