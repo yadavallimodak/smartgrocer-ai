@@ -1,9 +1,32 @@
 import os
+import re
 import requests
 from typing import Dict, Any, Optional
 
 SPOONACULAR_API_KEY = os.environ.get("SPOONACULAR_API_KEY")
 BASE_URL = "https://api.spoonacular.com/recipes"
+
+# Words that Spoonacular sometimes embeds in ingredient names that are actually
+# measurements/quantities, not part of the ingredient itself.
+_MEASUREMENT_WORDS = {
+    "spoon", "tablespoon", "teaspoon", "cup", "cups", "pinch", "dash",
+    "handful", "bunch", "slice", "slices", "piece", "pieces", "clove",
+    "cloves", "head", "stalk", "stalks", "sprig", "sprigs", "knob",
+}
+
+
+def _clean_ingredient_name(raw: str) -> str:
+    """
+    Strips measurement words that Spoonacular sometimes bakes into the
+    nameClean field (e.g. 'spoon butter' -> 'butter', 'spoon salt' -> 'salt').
+    """
+    words = raw.strip().split()
+    # Drop leading measurement words
+    while words and words[0].lower() in _MEASUREMENT_WORDS:
+        words.pop(0)
+    cleaned = " ".join(words) if words else raw
+    return cleaned.strip()
+
 
 def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None) -> Optional[Dict[str, Any]]:
     """
@@ -42,14 +65,15 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
             # Find the best match by checking if the query words appear in the title
             query_words = set(query.lower().split())
             best_match = results[0]
-            max_overlap = -1
+            max_overlap = 0
             
             for res in results:
                 title_words = set(res.get("title", "").lower().split())
                 overlap = len(query_words.intersection(title_words))
-                # Perfect match check
+                # Perfect match check — exact substring
                 if query.lower() in res.get("title", "").lower():
                     best_match = res
+                    max_overlap = len(query_words)
                     break
                 if overlap > max_overlap:
                     max_overlap = overlap
@@ -58,12 +82,12 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
             if not best_match:
                 return None
                 
-            # If the API returned a recipe with very low overlap, reject it
-            # e.g., 'Paneer Butter Masala' -> 'Palak Paneer' (1 / 3 = 0.33)
+            # Accept the match if at least ONE meaningful word overlaps.
+            # This allows "Palak Paneer" for "Paneer Butter Masala" (shares "paneer")
+            # but still rejects completely unrelated recipes.
             if query.lower() not in best_match.get("title", "").lower():
-                word_count = max(1, len(query_words))
-                if max_overlap / word_count < 0.5:
-                    print(f"Spoonacular rejected bad match: {best_match.get('title')} for query {query}")
+                if max_overlap == 0:
+                    print(f"Spoonacular rejected: no word overlap between '{best_match.get('title')}' and '{query}'")
                     return None
                     
             recipe = best_match
@@ -71,10 +95,12 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
             # Extract clean ingredient names
             ingredients = []
             for ing in recipe.get("extendedIngredients", []):
-                # Clean up the name a bit to make it closer to what Kroger has
+                # Clean up the name to make it closer to what Kroger has
                 name = ing.get("nameClean") or ing.get("name")
                 if name:
-                    ingredients.append(name.title())
+                    cleaned = _clean_ingredient_name(name)
+                    if cleaned:
+                        ingredients.append(cleaned.title())
             
             # Remove duplicates while preserving order
             ingredients = list(dict.fromkeys(ingredients))
@@ -88,9 +114,7 @@ def search_recipe(query: str, exclude_ingredients: str = None, diet: str = None)
             else:
                 # Fallback to plain string
                 instructions_text = recipe.get("instructions") or "No detailed instructions available."
-                
                 # strip html tags if Spoonacular returned HTML
-                import re
                 instructions_text = re.sub(r'<[^>]+>', '', instructions_text)
             
             return {

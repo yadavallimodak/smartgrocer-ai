@@ -4,6 +4,7 @@ from backend.agents.search_agent import search_nearby_stores, search_web_for_gen
 from backend.agents.analytics import log_search
 from backend.agents.state_manager import analyze_kroger_intent, STORE_ID
 from backend.kroger_api import find_nearby_stores
+import os
 
 
 
@@ -38,47 +39,103 @@ def handle_user_query(query: str, session_id: str = "default_session",
         exclude_ingredients = kroger_intent.get("exclude_ingredients")
         diet = kroger_intent.get("diet")
         
-        # Override hallucinated LLM recipes with highly accurate Spoonacular API data
+        # STEP 1: Try Spoonacular as the primary recipe data source
         try:
             from backend.spoonacular_api import search_recipe as spoonacular_search
             spoon_data = spoonacular_search(recipe, exclude_ingredients=exclude_ingredients, diet=diet)
             if spoon_data:
                 recipe = spoon_data["recipe_name"]
-                ingredients = spoon_data["ingredients"]
+                if spoon_data["ingredients"]:
+                    ingredients = spoon_data["ingredients"]
                 
                 # Only override instructions if Spoonacular actually found them
                 if "No detailed instructions available" not in spoon_data["instructions"]:
                     instructions = spoon_data["instructions"]
                     
-                print(f"Loaded highly accurate recipe from Spoonacular: {recipe}")
+                print(f"Loaded recipe from Spoonacular: {recipe}")
                 
-                # If the bot originally thought it didn't know the recipe, fix its message
+                # Fix the vague message from rule-based engine
                 if "I don't have the exact recipe" in kroger_intent.get("message", ""):
-                    kroger_intent["message"] = f"I found a great recipe for {recipe}! Let's get the ingredients."
+                    kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's a recipe for you, including the ingredients and steps."
         except Exception as e:
             print(f"Spoonacular integration skipped/failed: {e}")
+        
+        # STEP 2: If STILL no ingredients (Spoonacular missed too), try a direct Gemini call
+        if not ingredients:
+            try:
+                import json as _json
+                api_key = os.environ.get("GEMINI_API_KEY")
+                if api_key:
+                    from google import genai
+                    from google.genai import types
+                    client = genai.Client(api_key=api_key)
+                    recipe_prompt = f"List ONLY the ingredient names for {recipe}. Return a JSON array of strings. Example: [\"butter\", \"onion\", \"tomato\"]. No quantities, no instructions, just ingredient names."
+                    config = types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0
+                    )
+                    resp = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=[recipe_prompt],
+                        config=config
+                    )
+                    parsed = _json.loads(resp.text)
+                    if isinstance(parsed, list) and parsed:
+                        ingredients = [i.title() for i in parsed if isinstance(i, str)]
+                        print(f"Loaded {len(ingredients)} ingredients from Gemini fallback for '{recipe}'")
+                        kroger_intent["message"] = f"Great choice! {recipe} is delicious. Here's a recipe for you, including the ingredients and steps."
+            except Exception as e:
+                print(f"Gemini recipe fallback failed: {e}")
+        
+        # STEP 3: If STILL no instructions, try Gemini for that too
+        if not instructions and ingredients:
+            try:
+                import json as _json
+                api_key = os.environ.get("GEMINI_API_KEY")
+                if api_key:
+                    from google import genai
+                    from google.genai import types
+                    client = genai.Client(api_key=api_key)
+                    instr_prompt = f"Give me step-by-step cooking instructions for {recipe}. Return as a single string with numbered steps like '1. Do this. 2. Do that.' Be concise but complete."
+                    config = types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.0
+                    )
+                    resp = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=[instr_prompt],
+                        config=config
+                    )
+                    parsed = _json.loads(resp.text)
+                    if isinstance(parsed, str):
+                        instructions = parsed
+                    elif isinstance(parsed, dict):
+                        instructions = parsed.get("instructions") or parsed.get("steps") or str(parsed)
+                    print(f"Loaded instructions from Gemini fallback for '{recipe}'")
+            except Exception as e:
+                print(f"Gemini instructions fallback failed: {e}")
         
         reply_message = kroger_intent.get("message", f"Let's get the ingredients for {recipe}.")
         
         if instructions:
             reply_message = f"{reply_message}\n\n**Here is how to make {recipe}:**\n\n{instructions}"
             
-        # Look up each ingredient
+        # Look up each ingredient in the Kroger inventory
         found_locally = []
         missing = []
         
         for ing in ingredients:
             res = exact_item_lookup(ing)
-            if res["status"] == "success" and any(i["stock"] > 0 for i in res["data"]):
+            if res["status"] == "success" and res["data"] and any(i["stock"] > 0 for i in res["data"]):
                 found_locally.extend([i for i in res["data"] if i["stock"] > 0][:1])
             else:
                 missing.append(ing)
                 
-        # If missing ingredients, do a quick mock/web search for nearest store
+        # If missing ingredients, query nearby grocery stores within 10 miles
         missing_text = ""
         if missing:
             if user_lat is not None and user_lon is not None:
-                nearby = find_nearby_stores(user_lat, user_lon, radius_miles=15)
+                nearby = find_nearby_stores(user_lat, user_lon, radius_miles=10)
                 if nearby:
                     s = nearby[0]
                     missing_text = f"\n\nWe don't currently have {', '.join(missing)} in stock here, but I checked nearby and **{s['name']}** ({s['distance_miles']} miles away) may have them!"
