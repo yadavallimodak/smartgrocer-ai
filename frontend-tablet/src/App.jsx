@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ShoppingCart, Home, Info, TrendingUp, X } from 'lucide-react';
+import { ShoppingCart, Home, Info, TrendingUp, X, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import './index.css';
 import InventoryCard from './components/InventoryCard';
 import OutofStockMap from './components/OutofStockMap';
@@ -39,6 +39,9 @@ function App() {
   const [showStorePicker, setShowStorePicker] = useState(false);
   const [nearbyStores, setNearbyStores] = useState([]);
   const [storeDetectionStatus, setStoreDetectionStatus] = useState('detecting'); // 'detecting' | 'found' | 'not_found' | 'expanded' | 'no_location'
+  const [isListening, setIsListening] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true); // auto-read bot responses
+  const recognitionRef = useRef(null);
   const [isWelcome, setIsWelcome] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const chatEndRef = useRef(null);
@@ -146,6 +149,84 @@ function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  // ── Voice Input (Speech-to-Text) ───────────────────────────────────
+  const startListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognitionRef.current = recognition;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (e) => {
+      console.warn('Speech recognition error:', e.error);
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript;
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+      // Show interim results in the input
+      if (interimTranscript) setInputValue(interimTranscript);
+      // Auto-send on final
+      if (finalTranscript.trim()) {
+        setInputValue('');
+        sendMessage(finalTranscript.trim());
+      }
+    };
+
+    recognition.start();
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
+
+  // ── Voice Output (Text-to-Speech) ─────────────────────────────────
+  const speakText = (text) => {
+    if (!voiceEnabled || !text) return;
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    // Clean markdown/emoji from text for cleaner speech
+    const cleanText = text
+      .replace(/[#*_~`>\[\]()!]/g, '')
+      .replace(/\n+/g, '. ')
+      .replace(/📍|🛒|🔍|😕|🕐|🔎|➤|✅|❌|⚠️/g, '')
+      .trim();
+    if (!cleanText) return;
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
   const sendMessage = async (text) => {
     const userQuery = text || inputValue;
     if (!userQuery.trim()) return;
@@ -198,6 +279,7 @@ function App() {
             };
             return newMsgs;
           });
+          speakText(responseText);
         }, 1500);
       } else {
         setIsTyping(false);
@@ -207,11 +289,13 @@ function App() {
           type: data.type,
           data: data.response
         }]);
+        speakText(responseText);
       }
 
     } catch {
       setIsTyping(false);
       setMessages(prev => [...prev, { sender: 'bot', text: 'Sorry, I\'m having trouble connecting to the store network right now. Please try again.', type: 'chat' }]);
+      if (voiceEnabled) speakText('Sorry, I\'m having trouble connecting to the store network right now. Please try again.');
     }
   };
 
@@ -486,13 +570,29 @@ function App() {
 
             {/* Input */}
             <div className="input-area slide-up">
+              <button
+                className={`mic-btn ${isListening ? 'listening' : ''}`}
+                onClick={toggleListening}
+                aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+                title={isListening ? 'Tap to stop' : 'Tap to speak'}
+              >
+                {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              </button>
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Ask me about any product, aisle, or recipe…"
+                placeholder={isListening ? 'Listening...' : 'Ask me about any product, aisle, or recipe…'}
               />
+              <button
+                className={`voice-toggle-btn ${voiceEnabled ? 'active' : ''}`}
+                onClick={() => { setVoiceEnabled(v => !v); if (voiceEnabled) window.speechSynthesis.cancel(); }}
+                aria-label={voiceEnabled ? 'Mute voice responses' : 'Enable voice responses'}
+                title={voiceEnabled ? 'Voice responses ON — click to mute' : 'Voice responses OFF — click to enable'}
+              >
+                {voiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
               <button className="send-btn" onClick={handleSend} aria-label="Send">
                 ➤
               </button>
