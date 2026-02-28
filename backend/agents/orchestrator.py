@@ -34,7 +34,7 @@ def handle_user_query(query: str, session_id: str = "default_session",
                 from google import genai
                 client = genai.Client(api_key=api_key)
                 resp = client.models.generate_content(
-                    model="gemini-2.0-flash",
+                        model="gemini-2.5-flash",
                     contents=[f"You are a friendly grocery store assistant. A customer asked: '{query}'. Give a very brief, helpful answer (2-3 sentences max), then gently redirect back to how you can help them with groceries."]
                 )
                 return {"type": "chat", "response": resp.text}
@@ -83,7 +83,7 @@ Example: {{"ingredients": ["butter", "onion", "tomato"], "instructions": "1. Cho
                         temperature=0.2
                     )
                     resp = client.models.generate_content(
-                        model="gemini-2.0-flash",
+                            model="gemini-2.5-flash",
                         contents=[recipe_prompt],
                         config=config
                     )
