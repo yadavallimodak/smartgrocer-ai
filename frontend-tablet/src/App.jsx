@@ -15,12 +15,12 @@ const SUGGESTIONS = [
 ];
 
 const AVAILABLE_STORES = [
-  { id: "01400943", name: "The Colony, TX · Store #01400943" },
-  { id: "01401234", name: "Prosper, TX · Store #01401234" },
-  { id: "01401567", name: "Dallas Pkwy, Frisco, TX · Store #01401567" },
-  { id: "01401890", name: "Ohio Dr, Frisco, TX · Store #01401890" },
-  { id: "01402100", name: "Lewisville, TX · Store #01402100" },
-  { id: "01402350", name: "Carrollton, TX · Store #01402350" }
+  { id: "01400943", name: "The Colony, TX · Store #01400943", address: "5225 State Hwy 121, The Colony, TX 75056" },
+  { id: "01401234", name: "Prosper, TX · Store #01401234", address: "4709 W University Dr, Prosper, TX 75078" },
+  { id: "01401567", name: "Dallas Pkwy, Frisco, TX · Store #01401567", address: "2580 Dallas Pkwy, Frisco, TX 75034" },
+  { id: "01401890", name: "Ohio Dr, Frisco, TX · Store #01401890", address: "5901 Ohio Dr, Frisco, TX 75035" },
+  { id: "01402100", name: "Lewisville, TX · Store #01402100", address: "2350 Lake Vista Dr, Lewisville, TX 75067" },
+  { id: "01402350", name: "Carrollton, TX · Store #01402350", address: "750 E Hebron Pkwy, Carrollton, TX 75010" }
 ];
 
 function App() {
@@ -72,7 +72,7 @@ function App() {
           setStoreName(displayName);
           // If this store isn't in our dropdown list, add it
           if (!AVAILABLE_STORES.find(s => s.id === data.store_id)) {
-            setAvailableStores(prev => [{ id: data.store_id, name: displayName }, ...prev]);
+            setAvailableStores(prev => [{ id: data.store_id, name: displayName, address: data.address }, ...prev]);
           }
           console.log(`Auto-detected nearest Kroger: ${data.name} (${data.distance_miles} mi) — ${data.address}`);
         }
@@ -300,10 +300,11 @@ function App() {
               className="appearance-none bg-transparent text-white py-2 px-4 pr-9 rounded-xl text-sm font-medium focus:outline-none transition-all cursor-pointer truncate max-w-[250px] md:max-w-[400px]"
               value={storeId}
               onChange={handleStoreChange}
+              title={availableStores.find(s => s.id === storeId)?.address || 'Select a store'}
               style={{ backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 0.6rem top 50%', backgroundSize: '0.65rem auto' }}
             >
               {availableStores.map((s) => (
-                <option key={s.id} value={s.id} className="text-gray-900 bg-white">{s.name}</option>
+                <option key={s.id} value={s.id} className="text-gray-900 bg-white" title={s.address}>{s.name}</option>
               ))}
             </select>
             <div className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-transparent text-white rounded-xl text-sm font-semibold flex-shrink-0">
