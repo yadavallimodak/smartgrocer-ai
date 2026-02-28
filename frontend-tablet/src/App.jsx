@@ -34,7 +34,11 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [storeId, setStoreId] = useState('01400943');
   const [storeName, setStoreName] = useState('The Colony, TX · Store #01400943');
+  const [storeAddress, setStoreAddress] = useState('5225 State Hwy 121, The Colony, TX 75056');
   const [availableStores, setAvailableStores] = useState(AVAILABLE_STORES);
+  const [showStorePicker, setShowStorePicker] = useState(false);
+  const [nearbyStores, setNearbyStores] = useState([]);
+  const [storeDetectionStatus, setStoreDetectionStatus] = useState('detecting'); // 'detecting' | 'found' | 'not_found' | 'expanded' | 'no_location'
   const [isWelcome, setIsWelcome] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const chatEndRef = useRef(null);
@@ -55,29 +59,72 @@ function App() {
     );
   });
 
-  // Auto-detect the nearest Kroger store on page load
+  // Helper to set a store from API data
+  const selectStore = (store) => {
+    setStoreId(store.store_id);
+    const addrParts = (store.address || '').split(',');
+    const city = addrParts.length >= 2 ? addrParts[1].trim() : store.name;
+    const displayName = `${city} · Store #${store.store_id}`;
+    setStoreName(displayName);
+    setStoreAddress(store.address);
+    if (!AVAILABLE_STORES.find(s => s.id === store.store_id)) {
+      setAvailableStores(prev => [{ id: store.store_id, name: displayName, address: store.address }, ...prev]);
+    }
+  };
+
+  // Search for stores at a given radius
+  const searchStores = async (loc, radius) => {
+    const res = await fetch(`${API_URL}/api/nearest-store?lat=${loc.lat}&lon=${loc.lon}&radius=${radius}`);
+    const data = await res.json();
+    return data.stores || [];
+  };
+
+  // Expand search to 100 miles and show picker
+  const expandSearch = async () => {
+    setStoreDetectionStatus('detecting');
+    const loc = await getLocation();
+    if (!loc) return;
+    try {
+      const stores = await searchStores(loc, 100);
+      if (stores.length > 0) {
+        setNearbyStores(stores);
+        setStoreDetectionStatus('expanded');
+        setShowStorePicker(true);
+      } else {
+        setStoreDetectionStatus('not_found');
+      }
+    } catch (e) {
+      console.warn('Expanded search failed:', e);
+    }
+  };
+
+  // Pick a store from the modal
+  const pickStore = (store) => {
+    selectStore(store);
+    setShowStorePicker(false);
+    setStoreDetectionStatus('found');
+  };
+
+  // Auto-detect the nearest Kroger store on page load (25mi radius)
   useEffect(() => {
     const detectNearestStore = async () => {
       const loc = await getLocation();
-      if (!loc) return; // Geolocation denied or unavailable — keep default store
+      if (!loc) {
+        setStoreDetectionStatus('no_location');
+        return;
+      }
       try {
-        const res = await fetch(`${API_URL}/api/nearest-store?lat=${loc.lat}&lon=${loc.lon}`);
-        const data = await res.json();
-        if (data.store_id) {
-          setStoreId(data.store_id);
-          // Build a readable store name from the address
-          const addrParts = (data.address || '').split(',');
-          const city = addrParts.length >= 2 ? addrParts[1].trim() : data.name;
-          const displayName = `${city} · Store #${data.store_id}`;
-          setStoreName(displayName);
-          // If this store isn't in our dropdown list, add it
-          if (!AVAILABLE_STORES.find(s => s.id === data.store_id)) {
-            setAvailableStores(prev => [{ id: data.store_id, name: displayName, address: data.address }, ...prev]);
-          }
-          console.log(`Auto-detected nearest Kroger: ${data.name} (${data.distance_miles} mi) — ${data.address}`);
+        const stores = await searchStores(loc, 25);
+        if (stores.length > 0) {
+          selectStore(stores[0]);
+          setStoreDetectionStatus('found');
+          console.log(`Auto-detected nearest Kroger: ${stores[0].name} (${stores[0].distance_miles} mi) — ${stores[0].address}`);
+        } else {
+          setStoreDetectionStatus('not_found');
         }
       } catch (e) {
         console.warn('Could not auto-detect nearest store:', e);
+        setStoreDetectionStatus('no_location');
       }
     };
     detectNearestStore();
@@ -320,6 +367,42 @@ function App() {
         </div>
       </div>
 
+      {/* Store Picker Modal */}
+      {showStorePicker && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-[500px] max-h-[70vh] overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1e3a5f] to-[#2563eb] text-white">
+              <h2 className="text-lg font-bold">Select Your Kroger Store</h2>
+              <p className="text-sm text-white/80 mt-1">Found {nearbyStores.length} store{nearbyStores.length !== 1 ? 's' : ''} within 100 miles</p>
+            </div>
+            <div className="overflow-y-auto max-h-[45vh] p-2">
+              {nearbyStores.map((s) => (
+                <button
+                  key={s.store_id}
+                  onClick={() => pickStore(s)}
+                  className="w-full text-left p-4 rounded-xl hover:bg-blue-50 transition-all border border-transparent hover:border-blue-200 mb-1 group"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-semibold text-gray-900">{s.name}</span>
+                      <span className="text-xs text-gray-500 ml-2">#{s.store_id}</span>
+                      <p className="text-sm text-gray-600 mt-0.5">📍 {s.address}</p>
+                      {s.hours && <p className="text-xs text-gray-400 mt-0.5">🕐 {s.hours}</p>}
+                    </div>
+                    <span className="text-sm font-medium text-blue-600 whitespace-nowrap ml-3">{s.distance_miles} mi</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="p-4 border-t border-gray-100">
+              <button onClick={() => setShowStorePicker(false)} className="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Content Area */}
       <div className="kiosk-content">
         {activeTab === 'home' && isWelcome && (
@@ -327,6 +410,37 @@ function App() {
             <div className="welcome-content fade-in-up">
               <h1>Hello, welcome to <br />SmartGrocerAI.</h1>
               <p>Find products, discover recipes, and navigate the store instantly.</p>
+
+              {/* Store connection status */}
+              {storeDetectionStatus === 'detecting' && (
+                <div className="mt-4 px-5 py-3 bg-white/10 backdrop-blur-sm rounded-xl text-white/90 text-sm animate-pulse">
+                  🔍 Detecting your nearest Kroger store...
+                </div>
+              )}
+              {storeDetectionStatus === 'found' && (
+                <div className="mt-4 px-5 py-3 bg-white/15 backdrop-blur-sm rounded-xl text-white text-sm">
+                  <p className="font-semibold">📍 Connected to: {storeName}</p>
+                  <p className="text-white/75 text-xs mt-1">{storeAddress}</p>
+                </div>
+              )}
+              {storeDetectionStatus === 'not_found' && (
+                <div className="mt-4 px-5 py-3 bg-white/15 backdrop-blur-sm rounded-xl text-white text-sm">
+                  <p>😕 No Kroger stores found within 25 miles.</p>
+                  <button
+                    onClick={expandSearch}
+                    className="mt-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all text-sm font-medium"
+                  >
+                    🔎 Search within 100 miles
+                  </button>
+                </div>
+              )}
+              {storeDetectionStatus === 'no_location' && (
+                <div className="mt-4 px-5 py-3 bg-white/15 backdrop-blur-sm rounded-xl text-white text-sm">
+                  <p>📍 Location access not available. Using default store.</p>
+                  <p className="text-white/75 text-xs mt-1">{storeAddress}</p>
+                </div>
+              )}
+
               <button
                 className="welcome-btn"
                 onClick={startTransition}

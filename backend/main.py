@@ -65,22 +65,22 @@ def chat_endpoint(request: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/nearest-store")
-def nearest_store(lat: float, lon: float):
-    """Returns the nearest Kroger store to the given coordinates.
-    Uses the Kroger Locations API for real data, or mock DFW data as fallback."""
+def nearest_store(lat: float, lon: float, radius: int = 25):
+    """Returns Kroger stores near the given coordinates within the specified radius (miles).
+    Returns a list of all stores found, sorted by distance."""
     try:
-        stores = find_nearby_stores(lat, lon, radius_miles=50)
-        if stores:
-            nearest = stores[0]
-            return {
-                "store_id": nearest["store_id"],
-                "name": nearest["name"],
-                "address": nearest["address"],
-                "distance_miles": nearest["distance_miles"],
-                "phone": nearest.get("phone", ""),
-                "hours": nearest.get("hours", ""),
-            }
-        return {"store_id": None, "name": "No Kroger stores found nearby", "address": "", "distance_miles": None}
+        stores = find_nearby_stores(lat, lon, radius_miles=radius)
+        results = []
+        for s in stores:
+            results.append({
+                "store_id": s["store_id"],
+                "name": s["name"],
+                "address": s["address"],
+                "distance_miles": s["distance_miles"],
+                "phone": s.get("phone", ""),
+                "hours": s.get("hours", ""),
+            })
+        return {"stores": results, "radius": radius}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
